@@ -1,12 +1,41 @@
-MAP = [
-    "##########",
-    "#........#",
-    "#..##....#",
-    "#..#..P..#",
-    "#..##....#",
-    "#........#",
-    "##########"
-]
+# MAP = [
+#     "##########",
+#     "#........#",
+#     "#..##....#",
+#     "#..#..P..#",
+#     "#..##....#",
+#     "#........#",
+#     "##########"
+# ]
+def load_map(filename):
+    with open(filename, 'r') as f:
+        lines = [line.strip() for line in f.readlines()]
+
+    if len(lines) == 0:
+        raise ValueError("Map file is empty")
+    
+    width = len(lines[0])
+    for line in lines:
+        if len(line) != width:
+            raise ValueError("Map is not rectangular")
+        
+    allowed = set("#.P")
+    p_count = 0
+
+    for r in range(len(lines)):
+        for c in range(len(lines[0])):
+            ch = lines[r][c]
+            if ch not in allowed:
+                raise ValueError(f"Invalid character '{ch}' at ({r}, {c})")
+            if ch == 'P':
+                p_count += 1
+
+    if p_count != 1:
+        raise ValueError(f"Map must contain exactly one player")
+
+    return lines
+
+MAP = load_map("maps/map1.txt")
 
 import tkinter as tk
 
@@ -72,6 +101,8 @@ def try_move(dr, dc):
     
     player_r = nr
     player_c = nc
+
+    draw_world()
 
 def on_key(event):
     if event.keysym == "Up":
