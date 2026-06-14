@@ -1,12 +1,6 @@
-# MAP = [
-#     "##########",
-#     "#........#",
-#     "#..##....#",
-#     "#..#..P..#",
-#     "#..##....#",
-#     "#........#",
-#     "##########"
-# ]
+import tkinter as tk
+from PIL import Image, ImageTk
+
 def load_map(filename):
     with open(filename, 'r') as f:
         lines = [line.strip() for line in f.readlines()]
@@ -19,7 +13,7 @@ def load_map(filename):
         if len(line) != width:
             raise ValueError("Map is not rectangular")
         
-    allowed = set("#.P")
+    allowed = set("#.PE")
     p_count = 0
 
     for r in range(len(lines)):
@@ -37,7 +31,6 @@ def load_map(filename):
 
 MAP = load_map("maps/map1.txt")
 
-import tkinter as tk
 
 TILE = 48
 ROWS = len(MAP)
@@ -54,11 +47,37 @@ canvas.pack()
 player_r = 0
 player_c = 0
 
+orginal_images = {
+    'floor': Image.open("tiles/ground.png"), 
+    'wall': Image.open("tiles/wall.png"),
+    'player': Image.open("tiles/player.png"),
+    'exit': Image.open("tiles/exit.png"),
+}
+
+resized_images = {
+    'floor': ImageTk.PhotoImage(orginal_images['floor'].resize((TILE, TILE))),
+    'wall': ImageTk.PhotoImage(orginal_images['wall'].resize((TILE, TILE))),
+    'player': ImageTk.PhotoImage(orginal_images['player'].resize((TILE, TILE))),
+    'exit': ImageTk.PhotoImage(orginal_images['exit'].resize((TILE, TILE))),
+}
+
+tile_lookup = {
+    '#': 'wall',
+    '.': 'floor',
+    'P': 'player',
+    'E': 'exit'
+}   
+
 for r in range(ROWS):
     for c in range(COLS):
         if MAP [r][c] == 'P':
             player_r = r
             player_c = c
+
+def draw_image_tile(r, c, key):
+    x = c * TILE
+    y = r * TILE
+    canvas.create_image(x, y, image=resized_images[key], anchor="nw")   
 
 def draw_tile(r, c, ch):
     x1 = c * TILE
@@ -71,21 +90,23 @@ def draw_tile(r, c, ch):
     else:
         color = "white"
 
-    canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="black")
+    canvas.create_image(x1, y1, image=resized_images[tile_lookup[ch]], anchor="nw")
 
 def draw_player(r, c):
     x1 = c * TILE
     y1 = r * TILE
     x2 = x1 + TILE
     y2 = y1 + TILE
-    canvas.create_oval(x1+8, y1+8, x2-8, y2-8, fill="orange", outline="black")
+    canvas.create_image(x1, y1, image=resized_images['player'], anchor="nw")
 
 def draw_world():
     canvas.delete("all")
     for r in range(ROWS):
         for c in range(COLS):
-            draw_tile(r, c, MAP[r][c])
-    draw_player(player_r, player_c)
+            ch = MAP[r][c]
+            draw_tile(r, c, ch)
+
+    draw_image_tile(player_r, player_c, 'player')
 
 def try_move(dr, dc):
     global player_r, player_c
@@ -101,7 +122,7 @@ def try_move(dr, dc):
     
     player_r = nr
     player_c = nc
-
+    #MAP[dr][dc] = '.'
     draw_world()
 
 def on_key(event):
